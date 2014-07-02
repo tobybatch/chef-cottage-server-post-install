@@ -1,0 +1,45 @@
+User        "www-data"
+Group       "www-data"
+#RootJail   "/chroot/pound"
+
+## Logging: (goes to syslog by default)
+##  0   no logging
+##  1   normal
+##  2   extended
+##  3   Apache-style (common log format)
+LogLevel    1
+
+## check backend every X secs:
+Alive       30
+
+## use hardware-accelleration card supported by openssl(1):
+#SSLEngine  "<hw>"
+
+# poundctl control socket
+Control "/var/run/pound/poundctl.socket"
+
+ListenHTTPS
+    Address 0.0.0.0 # all interfaces
+    Port 443
+    AddHeader "X-Forwarded-Proto: https"
+    HeadRemove "X-Forwarded-Proto"
+    HeadRemove "X-Forwarded-For"
+
+    HeadRemove "http_host"
+    AddHeader "hhtp_host" "lb.api.carltonsoftware.co.uk"
+
+    Cert "/path/to/certificate.pem
+
+    Service
+        BackEnd
+            Address 10.0.0.1
+            Port 80
+            Priority 1
+        End
+        BackEnd
+            Address 10.0.0.2
+            Port 80
+            Priority 1
+            End
+    End
+End
