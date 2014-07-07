@@ -1,0 +1,62 @@
+backend default {
+    .host = "localhost";
+    .port = "80";
+}
+
+
+sub vcl_recv {
+    if (req.http.Cookie) {
+        set req.http.Cookie = ";" + req.http.Cookie;
+        set req.http.Cookie = regsuball(req.http.Cookie, "; +", ";");
+        set req.http.Cookie = regsuball(req.http.Cookie, ";(SESS[a-z0-9]+|NO_CACHE)=", "; \1=");
+        set req.http.Cookie = regsuball(req.http.Cookie, ";[^ ][^;]*", "");
+        set req.http.Cookie = regsuball(req.http.Cookie, "^[; ]+|[; ]+$", "");
+
+        if (req.http.Cookie == "") {
+            # If there are no remaining cookies, remove the cookie header. If there
+            # aren't any cookie headers, Varnish's default behavior will be to cache
+            # the page.
+            unset req.http.Cookie;
+        }
+        else {
+            # If there are any cookies left (a session or NO_CACHE cookie), do not
+            # cache the page. Pass it on to Apache directly.
+            return (pass);
+        }
+    }
+
+    if (req.request == "GET" && req.url ~ "\.(js)") {
+        lookup;
+    }
+
+## images
+    if (req.request == "GET" && req.url ~ "\.(gif|jpg|jpeg|bmp|png|tiff|tif|ico|img|tga|wmf)$") {
+        lookup;
+    }
+
+## various other content pages  
+    if (req.request == "GET" && req.url ~ "\.(css|html)$") {    
+        lookup;
+    }       
+
+## multimedia 
+    if (req.request == "GET" && req.url ~ "\.(svg|swf|ico|mp3|mp4|m4a|ogg|mov|avi|wmv)$") {
+        lookup;
+    }   
+
+## xml
+
+    if (req.request == "GET" && req.url ~ "\.(xml)$") {
+        lookup;
+    }
+
+## do not cache booking path or searches
+    if (
+        req.url ~ "^/property/availability(.*)" ||
+        req.url ~ "^/property/enquiry(.*)" ||
+        req.url ~ "^/property/booking(.*)" ||
+        req.url ~ "^/tabs_search/search(.*)"
+    ) {
+        return (pass);
+    }
+}

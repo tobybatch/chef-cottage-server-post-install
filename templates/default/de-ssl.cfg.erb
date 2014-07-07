@@ -19,19 +19,23 @@ Alive       30
 Control "/var/run/pound/poundctl.socket"
 
 ListenHTTPS
-    Address 0.0.0.0 # all interfaces
-    Port 443
-    AddHeader "X-Forwarded-Proto: https"
-    HeadRemove "X-Forwarded-Proto"
-    HeadRemove "X-Forwarded-For"
+        Address 0.0.0.0
+        Port    443
 
-    Cert "/etc/ssl/certs/ssl-cert.pem"
+        AddHeader "X-Forwarded-Proto: https"
+        HeadRemove "X-Forwarded-Proto"
+        HeadRemove "X-Forwarded-For"
 
-    Service
-        BackEnd
-            Address localhost
-            Port 80
-            Priority 1
+        ## allow PUT and DELETE also (by default only GET, POST and HEAD)?:
+        xHTTP           0
+
+        Cert "/etc/ssl/certs/ssl-cert-snakeoil.pem"
+
+        Service
+                BackEnd
+                        Address 127.0.0.1
+                        Port    80
+                End
         End
-    End
 End
+
